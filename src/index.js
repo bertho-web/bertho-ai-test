@@ -14,6 +14,10 @@ function json(data, status = 200) {
 export default {
   async fetch(request, env) {
 
+    // ─────────────────────────────
+    // CORS
+    // ─────────────────────────────
+
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -21,68 +25,133 @@ export default {
       });
     }
 
+
+    // ─────────────────────────────
+    // METHOD
+    // ─────────────────────────────
+
     if (request.method !== "POST") {
-      return json({
-        success: false,
-        error: "method_not_allowed"
-      }, 405);
+      return json(
+        {
+          success: false,
+          error: "method_not_allowed"
+        },
+        405
+      );
     }
 
+
+    // ─────────────────────────────
+    // CHAT
+    // ─────────────────────────────
+
     try {
-      const body = await request.json();
+
+      const body =
+        await request.json();
+
+
+      // Vérification du message
 
       if (
         !body.message ||
         typeof body.message !== "string"
       ) {
-        return json({
-          success: false,
-          error: "message_required"
-        }, 400);
+        return json(
+          {
+            success: false,
+            error: "message_required"
+          },
+          400
+        );
       }
+
+
+      // Historique
 
       const history =
         Array.isArray(body.history)
           ? body.history
           : [];
 
-      const response = await fetch(
-        "https://bertho-ai.bertho.workers.dev/chat",
+
+      // ─────────────────────────
+      // CONSTRUCTION DE LA REQUÊTE
+      // ─────────────────────────
+
+      const aiRequest =
+        new Request(
+          "https://bertho-ai.internal/chat",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              message: body.message,
+              history
+            })
+          }
+        );
+
+
+      // ─────────────────────────
+      // SERVICE BINDING
+      // ─────────────────────────
+
+      const response =
+        await env.BERTHO_AI.fetch(
+          aiRequest
+        );
+
+
+      // Lire la réponse
+
+      const text =
+        await response.text();
+
+
+      // ─────────────────────────
+      // RÉPONSE
+      // ─────────────────────────
+
+      return new Response(
+        text,
         {
-          method: "POST",
+          status: response.status,
 
           headers: {
-            "Content-Type": "application/json",
-            "Authorization":
-              `Bearer ${env.BERTHO_AI_SECRET}`
-          },
-
-          body: JSON.stringify({
-            message: body.message,
-            history
-          })
+            ...corsHeaders,
+            "Content-Type":
+              response.headers.get(
+                "Content-Type"
+              ) ||
+              "application/json"
+          }
         }
       );
 
-      const data = await response.json();
-
-      return json(
-        data,
-        response.status
-      );
 
     } catch (error) {
+
       console.error(
-        "AI TEST ERROR:",
+        "BERTHO AI TEST ERROR:",
         error
       );
 
-      return json({
-        success: false,
-        error:
-          error.message ||
-          "gateway_error"
-      }, 500);
+
+      return json(
+        {
+          success: false,
+          error:
+            error.message ||
+            "gateway_error"
+        },
+        500
+      );
     }
   }
 };
