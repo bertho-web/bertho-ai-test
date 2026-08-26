@@ -94,14 +94,36 @@ export default {
             },
 
             body: JSON.stringify({
+
   product:
     typeof body.product === "string"
       ? body.product
       : "unknown",
 
-  message: body.message,
+  context:
+    body.context &&
+    typeof body.context === "object"
+      ? body.context
+      : {
+          product:
+            typeof body.product === "string"
+              ? body.product
+              : "ecosystem",
+
+          area: "ai",
+
+          page: "lab",
+
+          source: "bertho-ai-test",
+
+          language: "fr"
+        },
+
+  message:
+    body.message,
 
   history
+
 })
           }
         );
