@@ -27,7 +27,7 @@ export default {
 
 
     // ─────────────────────────────
-    // METHOD
+    // METHOD CHECK
     // ─────────────────────────────
 
     if (request.method !== "POST") {
@@ -67,7 +67,7 @@ export default {
       }
 
 
-      // Historique
+      // Historique de conversation
 
       const history =
         Array.isArray(body.history)
@@ -75,9 +75,9 @@ export default {
           : [];
 
 
-      // ─────────────────────────
-      // CONSTRUCTION DE LA REQUÊTE
-      // ─────────────────────────
+      // ─────────────────────────────
+      // REQUÊTE INTERNE VERS BERTHO AI
+      // ─────────────────────────────
 
       const aiRequest =
         new Request(
@@ -87,7 +87,10 @@ export default {
 
             headers: {
               "Content-Type":
-                "application/json"
+                "application/json",
+
+              "Authorization":
+                `Bearer ${env.BERTHO_AI_SECRET}`
             },
 
             body: JSON.stringify({
@@ -98,9 +101,9 @@ export default {
         );
 
 
-      // ─────────────────────────
+      // ─────────────────────────────
       // SERVICE BINDING
-      // ─────────────────────────
+      // ─────────────────────────────
 
       const response =
         await env.BERTHO_AI.fetch(
@@ -108,15 +111,17 @@ export default {
         );
 
 
-      // Lire la réponse
+      // ─────────────────────────────
+      // RÉCUPÉRATION DE LA RÉPONSE
+      // ─────────────────────────────
 
       const text =
         await response.text();
 
 
-      // ─────────────────────────
-      // RÉPONSE
-      // ─────────────────────────
+      // ─────────────────────────────
+      // RETOUR AU LAB
+      // ─────────────────────────────
 
       return new Response(
         text,
@@ -125,6 +130,7 @@ export default {
 
           headers: {
             ...corsHeaders,
+
             "Content-Type":
               response.headers.get(
                 "Content-Type"
