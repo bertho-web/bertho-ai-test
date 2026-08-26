@@ -94,9 +94,15 @@ export default {
             },
 
             body: JSON.stringify({
-              message: body.message,
-              history
-            })
+  product:
+    typeof body.product === "string"
+      ? body.product
+      : "unknown",
+
+  message: body.message,
+
+  history
+})
           }
         );
 
