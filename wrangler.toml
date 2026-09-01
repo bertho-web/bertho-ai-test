@@ -8,3 +8,7 @@ ENVIRONMENT = "test"
 [[services]]
 binding = "BERTHO_AI"
 service = "bertho-ai"
+
+[[services]]
+binding = "BERTHO_IMAGE_AI"
+service = "bertho-ai-image"
