@@ -14,5 +14,5 @@ binding = "BERTHO_IMAGE_AI"
 service = "bertho-ai-image"
 
 [[services]]
-binding = "BERTHO_CODE_AI"
-service = "bertho-ai-code"
+binding = "BERTHO_SEARCH_AI"
+service = "bertho-ai-search"
