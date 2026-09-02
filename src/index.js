@@ -70,13 +70,14 @@ export default {
         }
         
         const imageReq = new Request("https://bertho-ai-image.internal/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: imagePrompt.trim(),
-            steps: body.steps || 4
-          })
-        });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: body.model || "flux2",
+    prompt: imagePrompt.trim(),
+    steps: body.steps || 4
+  })
+});
         
         const imageResponse = await env.BERTHO_IMAGE_AI.fetch(imageReq);
         const imageResultText = await imageResponse.text();
