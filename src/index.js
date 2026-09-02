@@ -20,9 +20,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     
-    // ─────────────────────────────
     // 1. CORS PREFLIGHT
-    // ─────────────────────────────
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -30,9 +28,7 @@ export default {
       });
     }
     
-    // ─────────────────────────────
     // 2. DIAGNOSTIC RÉSEAU (HEALTH)
-    // ─────────────────────────────
     if (request.method === "GET" && url.pathname === "/health") {
       return json({
         service: "bertho-ai-test",
@@ -40,28 +36,24 @@ export default {
         environment: env.ENVIRONMENT || "test",
         connectedServices: [
           "BERTHO_AI (Cerveau 8 Modèles)",
-          "BERTHO_IMAGE_AI (FLUX.1-Schnell)",
+          "BERTHO_IMAGE_AI (FLUX.2 / Phoenix / FLUX.1)",
           "BERTHO_SEARCH_AI (Recherche Web Live)",
           "BERTHO_SANDBOX_AI (Exécution Code V8)"
         ]
       });
     }
     
-    // ─────────────────────────────
     // 3. VÉRIFICATION MÉTHODE
-    // ─────────────────────────────
     if (request.method !== "POST") {
       return json({ success: false, error: "method_not_allowed" }, 405);
     }
     
-    // ─────────────────────────────
     // 4. ROUTAGE DES MICROSERVICES
-    // ─────────────────────────────
     try {
       const body = await request.json();
       
       // ============================================================
-      // A. AIGUILLAGE STUDIO GRAPHIQUE FLUX.1 (Image HD)
+      // A. AIGUILLAGE STUDIO GRAPHIQUE (FLUX.2 / Phoenix / FLUX.1)
       // ============================================================
       if (url.pathname === "/image" || body.type === "image") {
         const imagePrompt = body.prompt || body.message;
@@ -69,22 +61,27 @@ export default {
           return json({ success: false, error: "prompt_required" }, 400);
         }
         
+        const selectedImageModel = body.model || "flux2_dev";
+        
         const imageReq = new Request("https://bertho-ai-image.internal/", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    model: body.model || "flux2",
-    prompt: imagePrompt.trim(),
-    steps: body.steps || 4
-  })
-});
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: selectedImageModel,
+            prompt: imagePrompt.trim(),
+            steps: body.steps || 4
+          })
+        });
         
         const imageResponse = await env.BERTHO_IMAGE_AI.fetch(imageReq);
         const imageResultText = await imageResponse.text();
         
         return new Response(imageResultText, {
           status: imageResponse.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
         });
       }
       
@@ -113,7 +110,7 @@ export default {
       }
       
       // ============================================================
-      // C. AIGUILLAGE BAC À SABLE & EXÉCUTION DE CODE
+      // C. AIGUILLAGE BAC À SABLE & EXÉCUTION DE CODE V8
       // ============================================================
       if (url.pathname === "/sandbox" || body.type === "sandbox" || body.type === "code") {
         const codeToExecute = body.code || body.script || body.message;
@@ -140,7 +137,7 @@ export default {
       }
       
       // ============================================================
-      // D. AIGUILLAGE PAR DÉFAUT VERS LE CERVEAU CENTRAL (8 MODÈLES)
+      // D. AIGUILLAGE PAR DÉFAUT VERS LE CERVEAU CENTRAL
       // ============================================================
       if (!body.message || typeof body.message !== "string" || !body.message.trim()) {
         return json({ success: false, error: "message_required" }, 400);
@@ -179,7 +176,7 @@ export default {
         status: response.status,
         headers: {
           ...corsHeaders,
-          "Content-Type": response.headers.get("Content-Type") || "application/json"
+          "Content-Type": "application/json"
         }
       });
       
