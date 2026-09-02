@@ -16,3 +16,7 @@ service = "bertho-ai-image"
 [[services]]
 binding = "BERTHO_SEARCH_AI"
 service = "bertho-ai-search"
+
+[[services]]
+binding = "BERTHO_SANDBOX_AI"
+service = "bertho-ai-sandbox"
